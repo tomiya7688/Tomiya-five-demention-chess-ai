@@ -21,7 +21,9 @@
 | `rules` | `doc/rules.md`, 将来 `engine/` の合法手・終局 | 棋譜fixture、ターン確定・王手・分岐テスト | ルール版とケース出典 | fixtureによる期待状態照合→Core回帰 |
 | `state` | `doc/architecture.md`, 将来 `engine/` の時刻・世界線state | serialize/deserialize、make/unmake、hash、共有不変条件 | canonical state schema | 局所state test→全Core |
 | `runtime` | `doc/architecture.md`, 将来 `runtime/` | 提案拒否、状態不変、時計、Headless | Game/Player／turn contract | targeted runtime→固定seed対局 |
-| `search` | `doc/ai-model-roadmap.md`, 将来 `engines/` | 固定局面、時間／node制限、探索比較 | Move/Turn generator・評価API | 再現実験→探索benchmark |
+| `learning-core` | `doc/core-contract.md`, 将来 `learning_core/` | 共通ルールfixture、undo、状態往復 | Move/Action/Submit | 両Coreの対象testと差分test |
+| `parity` | `doc/core-parity-tests.md`, `doc/rules.md`, 両Core | R01～R20、最初の相違Move | 同じprofile／入力／操作と結果 | fixture→差分→再生 |
+| `search` | `doc/ai-model-roadmap.md`, 将来 `engines/` | 固定局面、探索制限・比較 | 合法Action／Submitと評価API | 再現実験→探索benchmark |
 | `model-package` | `doc/ai-model-roadmap.md`, 将来 `ai_package/`, `models/` | manifest/asset/metadataの互換・負例 | `kadoka.ai_metadata.v1`（採用予定） | schema/実package→推論smoke |
 | `creator-data` | `doc/ai-model-roadmap.md`, 将来 `tools/` | 学習Recipe、provenance、再実行 | Runtime／Creator境界 | 小さなdataset→headless比較 |
 | `protocol` | `doc/architecture.md`, 将来 `protocol/` | JSON/notation roundtrip、外部接続 | 意味的Action／Game state | producer＋consumer smoke |
