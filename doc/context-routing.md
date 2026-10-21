@@ -34,7 +34,7 @@
 
 ## 探索と検証を広げるトリガー
 
-- 時間／世界線／ターン／王手・終局の**ルール意味論**を変更した。
+- 時間／世界線／ターン／王手・終局の**ルール意味論**を変更した（Game CoreだけでなくLearning Coreのfixture・差分検証も対象）。
 - CoreまたはPlayerの公開API、state schema、モデルpackage契約が変更された。
 - Runtime／Creatorの依存方向やCMake targetを変更した。
 - sourceとspecが矛盾する、未知の利用側が見つかる、局所テストが失敗する。
