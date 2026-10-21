@@ -23,12 +23,15 @@
 
 ## 実装順とGate
 
-### Stage A — 正しいゲーム
+### Stage A — 同じ完全ルールを持つ二つのCore
 
-- [ ] ルールvariantとfixtureを確定
-- [ ] Authoritative Core、合法移動・分岐・ターン・王手・終局
-- [ ] Human / Random baselineとHeadless対局
-- [ ] 同じ入力で同じ状態になることを確認
+- [ ] [ルール仕様](rules.md)のStandard候補、4軸移動、特殊手、Present、Action/Submitを実機fixtureで確定
+- [ ] [Game Core](core-contract.md)：歴史が不変の世界線、部分Move／Submit、王手・終局を実装
+- [ ] **Learning Coreも同一の完全ルール**を独立実装（簡略化した擬似ゲームにはしない）
+- [ ] [R01～R20のfixtureと差分テスト](core-parity-tests.md)で各Move・Submit・生成世界線・終局を照合
+- [ ] Human / Randomと固定seedのHeadless対局、学習側棋譜のGame Coreによる再生
+
+**Stage A合格前に学習したモデルを対局用モデルとして採用しない。**
 
 ### Stage B — 評価／探索
 
@@ -54,11 +57,12 @@
 ## 5D Chess専用の探索研究
 
 - **Global positionを評価**：複数時刻／世界線、PresentとRoyal pieceへの脅威を考慮する。
-- **ターン単位の分岐**：単一Actionの有利さだけではターン確定を保証しない。
-- **世界線の増殖**：状態共有／差分・枝刈り・段階的合法手生成を検証する。
+- **ターン単位の分岐**：単一のMoveだけではターン確定を保証しない。**順序付きMove列＝Action**を構成し、PresentとRoyal pieceの安全性を満たすSubmitまで探索する。
+- **世界線の増殖**：状態共有／差分・枝刈り・段階的Move生成を検証する。historical board着地時の分岐とPlayable間ジャンプの両Board進行を区別する。
+- **Action順序・正規化**：非分岐Moveの同一結果の重複を抑える一方、分岐Moveの相対順序は保つ。canonical state比較と探索hashを分離する。
 - **時間・世界線ハッシュ**：類似局面と同一局面を区別するため、タイムライン構造も含む正規化を検討する。
 - **探索予算**：時間、node、メモリ、worldline数、モデル推論回数の上限を記録して再現する。
-- **研究評価**：固定局面セット、相手AI／先後／seedをそろえて比較する。
+- **研究評価**：固定局面セット、相手AI／先後／seedをそろえて比較する。Learning Coreの対局データはGame Coreでも再生・整合性を確認する。
 
 通常チェス用の駒価値や探索アルゴリズムはベースラインとして参考にできるが、正確性・性能を実測せずに「移植済み」としない。
 
