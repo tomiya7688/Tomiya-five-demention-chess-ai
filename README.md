@@ -8,7 +8,7 @@
 
 ## 目標
 
-- 時間軸・分岐世界線を含む局面を正確に扱える**独立したゲームCore**を作る。
+- 時間軸・分岐世界線を含む局面を正確に扱える**Game Core（対局用）**と、同一の全ルールを実装する**Learning Core（学習用）**を作る。
 - 人間・ランダムAI・探索AI・学習AI・外部AIを**同じ対局インターフェース**で差し替える。
 - [Kadoka Shougi AI](https://github.com/tomiya7688/Kadoka-shougi-ai)の探索・評価・AIファミリーと、[Kadoka Othello AI](https://github.com/tomiya7688/Kadoka-othello-AI)のRuntime／Creator分離・モデル／パッケージ・研究基盤を段階的に取り入れる。
 - 強さだけでなく、正確性、再現性、推論時間、メモリ使用量、実験の比較しやすさを重視する。
@@ -16,17 +16,20 @@
 
 ## ルールの対象と注意点
 
-想定する参考ルールは「[5D Chess With Multiverse Time Travel](https://5dchess.wiki.gg/wiki/Rules)」です。ただし、**このゲームとの完全互換・初期配置・バリアント・記譜法は未確定**であり、実装前に検証用局面を含めて固定します。
+参照ルールは「[5D Chess With Multiverse Time Travel](https://5dchess.wiki.gg/wiki/Rules)」です。公開ルールを調査し、**Standard（8×8・初期世界線1本）を第一候補**として駒の4軸移動・時間ジャンプ・王手・Actionまで整理しました。ただし**公式ゲームとの完全互換、各境界条件とゴールデンfixtureは未検証**です。
 
 通常のチェス盤だけでなく、盤面座標（file/rank）、時刻、世界線、各盤面の手番、過去への着手による分岐、active/inactive timeline、Present、王手と終局を扱う必要があります。特に**1駒の移動＝対局の1ターン完了とは限りません**。複数盤面への着手とターン確定を区別します。
 
-曖昧な規則を推測で実装済み仕様にせず、未決事項・出典・テストケースを [ルール整理](doc/rules.md) に記録します。商用ゲームの公式実装・公式AIであることを意味しません。
+4軸 `(x,y,T,L)` の移動、白・黒の半手Board、Playable／Historical、Active／Inactive、Presentを区別します。**Moveは部分着手、Actionは順序付きMove列、Submitはターン確定**です。過去へのジャンプでは旧履歴を書き換えず新世界線ができます。途中のMoveの自己王手だけでターン全体を不正扱いしません。
+
+詳細・未決事項は [ルール整理](doc/rules.md) に保持し、実機で照合するまでは完全互換を宣言しません。商用ゲームの公式実装・公式AIであることを意味しません。
 
 ## Kadokaシリーズから引き継ぐ設計
 
 | 方針 | 本プロジェクトでの扱い |
 | --- | --- |
-| **Authoritative Core** | 盤面・世界線・合法手・ターン・終局の正本はCoreだけが保持する |
+| **Authoritative Game Core** | 実対局の盤面・世界線・合法手・ターン・終局の正本はGame Coreだけが保持する |
+| **独立Learning Core** | 同じ全ルールを高速に再実装し、共通fixtureとGame Coreとの差分で検証する |
 | **AIは提案者** | AIが返す手／ターン操作をCoreが検証し、違法な提案で正本状態を壊さない |
 | **Core単独動作** | AIなしで局面作成・合法性判定・棋譜再生・人間同士の進行ができる |
 | **Runtime / Creator分離** | 対局に必要な軽い推論経路と、学習・変換・解析・レポートを分ける |
@@ -35,7 +38,7 @@
 | **Correctness before strength** | 強いAIより先にルールと状態遷移、undo／分岐／終局の回帰テストを完成させる |
 | **Headless first** | GUIに依存せず対局・検証・自己対局・性能計測を行う |
 
-兄弟プロジェクトの実装をそのまま移植するのではなく、**設計・検証方法・共通メタデータは流用し、5D固有のルールと探索は専用実装**にします。詳細は [アーキテクチャ](doc/architecture.md)。
+兄弟プロジェクトの実装をそのまま移植するのではなく、**設計・検証方法・共通メタデータは流用し、5D固有のルールと探索は専用実装**にします。詳細は [アーキテクチャ](doc/architecture.md)、[二つのCoreの共通契約](doc/core-contract.md)、[互換テスト計画](doc/core-parity-tests.md)。
 
 ## 実装予定のAI／モデルファミリー
 
@@ -62,7 +65,8 @@ Kadoka Shougi AIの計画にあるファミリーを起点に、Othello AIの評
 ## 構成案
 
 ```text
-engine/       # [予定] 5D局面・世界線・合法手・ターン確定・終局の正本
+engine/       # [予定] 対局用Game Core：5D全ルールの正本
+learning_core/ # [予定] 学習用Learning Core：全ルールの独立・高速実装
 runtime/      # [予定] Game/Player・時間制限・合法性検証・Headless対局
 engines/      # [予定] 評価・探索・学習モデル・キャラクターAI
 ai_package/   # [予定] モデルロード・外部AI接続・形式変換境界
@@ -97,8 +101,8 @@ AGENTS.md     # エージェント共通の短い作業規約
 ## 開発順序と完了条件
 
 1. **P0: ルール仕様とfixture** — 対象バリアント、時刻／世界線／Present／チェック／終局を根拠付きで確定する。
-2. **P1: Core** — 不変条件、局面の保存・復元、時間移動・分岐、合法手とターン確定をテストする。
-3. **P2: 対局基盤** — Human/Random、Headless、棋譜、再現可能なseed付き対局を完走させる。
+2. **P1: 二つのCore** — Game Core→Learning Coreの順に全ルールを実装し、固定fixtureと差分テストでMove／Submit／終局を照合する。
+3. **P2: 対局・学習基盤** — Human/Random、Headless、棋譜、固定seedの自己対局とLearning CoreデータのGame Core再生を完走させる。
 4. **P3: 探索基盤** — 状態差分、make/unmake、ハッシュ、探索制限、perft相当・性能計測を導入する。
 5. **P4: AIファミリー** — Evaluate→学習・高速化→Tree/Mine→統合・キャラクターAIの順に段階導入する。
 6. **P5: Creator／学習／配布** — Dataset provenance、複数AI比較、リーグ、パッケージ検証、CI・配布物検証を追加する。
@@ -112,6 +116,8 @@ AGENTS.md     # エージェント共通の短い作業規約
 - [doc/context-routing.md](doc/context-routing.md) — 作業別の読む場所・検証範囲
 - [doc/context-pack-template.md](doc/context-pack-template.md) — タスク単位のコンテキスト整理
 - [doc/architecture.md](doc/architecture.md) — Core／Runtime／Creatorと5D状態の設計
+- [doc/core-contract.md](doc/core-contract.md) — Game Core／Learning Coreの同一ルール契約とAction／Submit API
+- [doc/core-parity-tests.md](doc/core-parity-tests.md) — 共通fixtureと両Core差分テスト計画
 - [doc/rules.md](doc/rules.md) — ルール参照先と未決事項
 - [doc/ai-model-roadmap.md](doc/ai-model-roadmap.md) — シリーズAI／モデル移植計画
 
