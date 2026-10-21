@@ -73,7 +73,7 @@ Training / AI Creator / Self-play ──→ Learning Core
 
 Game CoreとLearning Coreは**共通のルールデータ・fixture／codec仕様**を参照できるが、互いの内部struct／可変stateを共有しない。共通部品のコード共有は性能・独立性を検討して判断。学習用Coreに直接外部Action検証を委ねない。
 
-C++20を第一候補とし、Pythonは高速なLearning Coreへのbindingとtraining/analysisに用いる想定。二系統のソース配置候補は `game_core/`, `learning_core/`, `runtime/` とする（現在存在しない）。
+C++20を第一候補とし、Pythonは高速なLearning Coreへのbindingとtraining/analysisに用いる想定。二系統のソース配置候補は `engine/`（Game Core）, `learning_core/`, `runtime/` とする（現在存在しない）。
 
 ## 互換性の合格条件
 
